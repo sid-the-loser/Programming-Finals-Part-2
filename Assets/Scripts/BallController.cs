@@ -2,17 +2,14 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 public class BallController : MonoBehaviour
 {
-    /*
-    To make the ball always move on the X axis.
-    Start the ball movement when “LMB” or Left Mouse Button is pressed.
-    Change movement direction to Z axis when “LMB” is pressed. By each LMB click, switch from Z axis to X axis and vice versa.
-    Make the ball fall when it’s not on the platform and the game should be over.
-    */
 
     [SerializeField] private float ballSpeed = 10;
+    [SerializeField] private CameraControls followCam;
+    [FormerlySerializedAs("_spawner")] [SerializeField] private PlatformSpawner spawner;
 
     private bool _axis; // false: x, true: z
     private bool _started;
@@ -26,6 +23,7 @@ public class BallController : MonoBehaviour
     void Start()
     {
         _rb = gameObject.GetComponent<Rigidbody>();
+        followCam.SetFollowState(true);
     }
 
     // Update is called once per frame
@@ -78,6 +76,27 @@ public class BallController : MonoBehaviour
         {
             _stopped = true;
             _rb.useGravity = true;
+            followCam.SetFollowState(false);
+            spawner.SetGenerator(false);
+        }
+    }
+
+    private void OnCollisionEnter(Collision other)
+    {
+        if (other.gameObject.CompareTag("diamond"))
+        {
+            Destroy(other.gameObject);
+        }
+    }
+
+    private void OnCollisionStay(Collision other)
+    {
+        if (other.gameObject.CompareTag("Platform"))
+        {
+            _stopped = false;
+            _rb.useGravity = false;
+            followCam.SetFollowState(true);
+            spawner.SetGenerator(true);
         }
     }
 }
